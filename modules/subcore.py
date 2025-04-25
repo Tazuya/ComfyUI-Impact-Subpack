@@ -1,13 +1,13 @@
-from PIL import Image
+import inspect
+import logging
+from collections import namedtuple
 
 import cv2
 import numpy as np
 import torch
-from collections import namedtuple
-from . import utils
-import inspect
-import logging
+from PIL import Image
 
+from . import utils
 
 orig_torch_load = torch.load
 
@@ -50,17 +50,16 @@ restricted_getattr.__name__ = 'getattr'
 
 
 try:
-    from ultralytics import YOLO
-    from ultralytics.nn.tasks import DetectionModel
-    from ultralytics.nn.tasks import SegmentationModel
-    from ultralytics.utils import IterableSimpleNamespace
-    from ultralytics.utils.tal import TaskAlignedAssigner
+    import dill._dill
+    import torch.nn.modules as torch_modules
     import ultralytics.nn.modules as modules
     import ultralytics.nn.modules.block as block_modules
-    import torch.nn.modules as torch_modules
     import ultralytics.utils.loss as loss_modules
-    import dill._dill
     from numpy.core.multiarray import scalar
+    from ultralytics import YOLO
+    from ultralytics.nn.tasks import DetectionModel, SegmentationModel
+    from ultralytics.utils import IterableSimpleNamespace
+    from ultralytics.utils.tal import TaskAlignedAssigner
     try:
         from numpy import dtype
         from numpy.dtypes import Float64DType
@@ -147,6 +146,7 @@ def torch_wrapper(*args, **kwargs):
         if weights_only is not None:
             kwargs['weights_only'] = weights_only
 
+        torch.serialization.add_safe_globals([getattr])
         return orig_torch_load(*args, **kwargs)  # NOTE: This code simply delegates the call to torch.load, and any errors that occur here are not the responsibility of Subpack.
     else:
         if weights_only is not None:
